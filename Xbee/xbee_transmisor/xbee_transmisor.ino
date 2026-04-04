@@ -15,12 +15,12 @@
 // ── Configuración ────────────────────────────────────────────────────────────
 #define XBEE_SERIAL   Serial2
 #define XBEE_BAUD     115200
-#define XBEE_RX_PIN   16
-#define XBEE_TX_PIN   17
+#define XBEE_RX_PIN   7
+#define XBEE_TX_PIN   8
 
 #define SEND_INTERVAL_MS  100   // 10 Hz → latencia máxima 100 ms
 #define PACKET_HEADER     0xAA
-#define PACKET_LEN        28    // bytes de payload (sin header, len, crc)
+#define PACKET_LEN        30    // bytes de payload (sin header, len, crc)
 
 // ── Estructura de datos (desempaquetada) ─────────────────────────────────────
 struct SensorData {
@@ -143,9 +143,10 @@ void setup() {
   Serial.begin(115200);
   Serial.println("[TX] Iniciando transmisor XBee AT...");
 
-  XBEE_SERIAL.begin(XBEE_BAUD, SERIAL_8N1, XBEE_RX_PIN, XBEE_TX_PIN);
+  // XBEE_SERIAL.begin(XBEE_BAUD, SERIAL_8N1, XBEE_RX_PIN, XBEE_TX_PIN);
+  XBEE_SERIAL.begin(XBEE_BAUD);
 
-  randomSeed(esp_random()); // Semilla verdaderamente aleatoria (hardware RNG)
+  randomSeed(millis()); // Semilla verdaderamente aleatoria (hardware RNG) para teensy
 
   Serial.println("[TX] Listo. Enviando cada " + String(SEND_INTERVAL_MS) + " ms");
 }
@@ -163,11 +164,13 @@ void loop() {
 
     uint8_t buf[30];
     uint8_t len = serializeSensorData(data, buf);
-
+    Serial.print("Enviando paquete de longitud: ");
+    Serial.println(len);
     // Medir tiempo de escritura al buffer UART
     uint32_t t0 = micros();
     XBEE_SERIAL.write(buf, len);
-    XBEE_SERIAL.flush(); // Espera a que el UART termine de enviar
+    // XBEE_SERIAL.println("HOLA");
+    // XBEE_SERIAL.flush(); // Espera a que el UART termine de enviar
     uint32_t elapsed = micros() - t0;
 
     packetsSent++;

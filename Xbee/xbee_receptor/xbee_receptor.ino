@@ -18,8 +18,8 @@
 #define XBEE_TX_PIN   17
 
 #define PACKET_HEADER 0xAA
-#define PACKET_LEN    28
-#define PACKET_TOTAL  30   // header(1) + len(1) + payload(28) + crc(1) = 31?
+#define PACKET_LEN    30
+#define PACKET_TOTAL  33   // header(1) + len(1) + payload(28) + crc(1) = 31?
                            // Ajuste: header+len+payload+crc = 1+1+26+1 = 29... ver nota abajo
 // Nota: la estructura exacta es:
 //   [0]  0xAA header
@@ -160,7 +160,7 @@ void loop() {
   // Leer todos los bytes disponibles en este ciclo (no bloqueante)
   while (XBEE_SERIAL.available()) {
     uint8_t b = XBEE_SERIAL.read();
-
+    Serial.printf("%02X ", b);
     if (!inPacket) {
       // Buscar byte de inicio
       if (b == PACKET_HEADER) {
@@ -206,9 +206,15 @@ void loop() {
   }
 
   // Detección de timeout (>500 ms sin paquete)
-  if (inPacket && (micros() - lastPacketUs) > 500000UL) {
-    Serial.println("[RX] Timeout esperando paquete, reseteando buffer...");
+  if (inPacket && (micros() - lastPacketUs) > 5000000UL) {
+    // Serial.println("[RX] Timeout esperando paquete, reseteando buffer...");
+    Serial.printf("[RX] Timeout. Bytes recibidos: %d de %d\n", rxIdx, PACKET_TOTAL);
     inPacket = false;
     rxIdx    = 0;
   }
+
+  // if (XBEE_SERIAL.available()) {
+  //   Serial.write(XBEE_SERIAL.read());
+  // }
+
 }
